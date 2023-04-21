@@ -8,13 +8,10 @@ void TCPReceiver::receive( TCPSenderMessage message, Reassembler& reassembler, W
   Wrap32 seqno( message.seqno );
   if ( message.SYN ) {
     seqno = seqno + 1;
-    if ( !syned_ ) {
-      zero_point_ = Wrap32( seqno );
-      syned_ = true;
-    }
+    zero_point_ = seqno;
   }
 
-  if ( syned_ ) {
+  if ( zero_point_.has_value() ) {
     reassembler.insert( seqno.unwrap( zero_point_.value(), reassembler.get_next_index() ),
                         message.payload,
                         message.FIN,

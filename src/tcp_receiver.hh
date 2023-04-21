@@ -7,7 +7,7 @@
 class TCPReceiver
 {
 private:
-  bool syned_ = false;
+  // bool syned_ = false;
   bool finned_ = false;
   std::optional<Wrap32> zero_point_ {};
   std::optional<Wrap32> next_index_ {};
