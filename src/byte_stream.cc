@@ -12,7 +12,7 @@ void Writer::push( string data )
   // Your code here.
   uint64_t sz = min( available_capacity(), static_cast<uint64_t>( data.size() ) );
   byte_pushed_ += sz;
-  for ( int i = 0; static_cast<uint64_t>(i) < sz; i++ ) {
+  for ( int i = 0; static_cast<uint64_t>( i ) < sz; i++ ) {
     buffer_.push_back( data[i] );
   }
   // (void)data;
@@ -82,7 +82,7 @@ void Reader::pop( uint64_t len )
 uint64_t Reader::bytes_buffered() const
 {
   // Your code here.
-  return  byte_pushed_ - byte_poped_;
+  return byte_pushed_ - byte_poped_;
 }
 
 uint64_t Reader::bytes_popped() const

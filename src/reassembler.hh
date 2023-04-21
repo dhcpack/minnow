@@ -3,9 +3,18 @@
 #include "byte_stream.hh"
 
 #include <string>
+#include <vector>
+
+using namespace std;
 
 class Reassembler
 {
+private:
+  uint64_t next_index_ = 0;
+  vector<pair<uint64_t, string>> pendings_ = vector<pair<uint64_t, string>>();
+  uint64_t bytes_pending_ = 0;
+  uint64_t last_index_ = -1;
+
 public:
   /*
    * Insert a new substring to be reassembled into a ByteStream.
