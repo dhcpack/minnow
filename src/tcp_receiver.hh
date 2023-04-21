@@ -6,6 +6,12 @@
 
 class TCPReceiver
 {
+private:
+  bool syned_ = false;
+  bool finned_ = false;
+  std::optional<Wrap32> zero_point_ {};
+  std::optional<Wrap32> next_index_ {};
+
 public:
   /*
    * The TCPReceiver receives TCPSenderMessages, inserting their payload into the Reassembler
