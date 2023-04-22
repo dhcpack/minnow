@@ -204,6 +204,74 @@ int main()
       test.execute( BytesPushed( 2 ) );
       test.execute( BytesPending( 0 ) );
     }
+
+    {
+      // Credit: Anonymous (2023)
+      ReassemblerTestHarness test { "yet another overlap test", 150 };
+
+      test.execute( Insert { "efgh", 4 } );
+      test.execute( BytesPushed( 0 ) );
+      test.execute( BytesPending( 4 ) );
+
+      test.execute( Insert { "op", 14 } );
+      test.execute( BytesPushed( 0 ) );
+      test.execute( BytesPending( 6 ) );
+
+      test.execute( Insert { "s", 18 } );
+      test.execute( BytesPushed( 0 ) );
+      test.execute( BytesPending( 7 ) );
+
+      test.execute( Insert { "a", 0 } );
+      test.execute( BytesPushed( 1 ) );
+      test.execute( BytesPending( 7 ) );
+
+      test.execute( Insert { "abcde", 0 } );
+      test.execute( BytesPushed( 8 ) );
+      test.execute( BytesPending( 3 ) );
+
+      test.execute( Insert { "opqrst", 14 } );
+      test.execute( BytesPushed( 8 ) );
+      test.execute( BytesPending( 6 ) );
+
+      test.execute( Insert { "op", 14 } );
+      test.execute( BytesPushed( 8 ) );
+      test.execute( BytesPending( 6 ) );
+
+      test.execute( Insert { "ijklmn", 8 } );
+      test.execute( BytesPushed( 20 ) );
+      test.execute( BytesPending( 0 ) );
+    }
+
+    {
+      // Credit: Eli Wald
+      ReassemblerTestHarness test { "small capacity with overlapping insert", 2 };
+      test.execute( Insert { "bc", 1 } );
+      test.execute( ReadAll( "" ) );
+      test.execute( BytesPushed( 0 ) );
+      test.execute( BytesPending( 1 ) );
+
+      test.execute( Insert { "a", 0 } );
+      test.execute( ReadAll( "ab" ) );
+      test.execute( BytesPushed( 2 ) );
+      test.execute( BytesPending( 0 ) );
+    }
+
+    {
+      // Credit: Chenhao Li
+      const size_t cap = { 1000 };
+      ReassemblerTestHarness test { "overlapping multiple unassembled sections 2", cap };
+
+      test.execute( Insert { "bcd", 1 } );
+      test.execute( Insert { "cde", 2 } );
+      test.execute( ReadAll( "" ) );
+      test.execute( BytesPushed( 0 ) );
+      test.execute( BytesPending( 4 ) );
+
+      test.execute( Insert { "a", 0 } );
+      test.execute( ReadAll( "abcde" ) );
+      test.execute( BytesPushed( 5 ) );
+      test.execute( BytesPending( 0 ) );
+    }
   } catch ( const exception& e ) {
     cerr << "Exception: " << e.what() << endl;
     return EXIT_FAILURE;
