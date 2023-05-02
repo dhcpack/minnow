@@ -27,7 +27,12 @@ void TCPTimer::start()
   retransmission_cnt_ = 0;
 }
 
-void TCPTimer::restart( bool double_RTO )
+void TCPTimer::reset_start()
+{
+  start();
+}
+
+void TCPTimer::double_start( bool double_RTO )
 {
   running_ = true;
   if ( double_RTO ) {
@@ -93,17 +98,17 @@ optional<TCPSenderMessage> TCPSender::maybe_send()
 void TCPSender::push( Reader& outbound_stream )
 {
   // Your code here.
-  uint64_t space = ackno_ + ( window_size_ == 0 ? 1 : window_size_ ) - sendno_;
+  uint64_t space = ackno_ + ( window_size_ == 0 ? 1 : window_size_ ) - next_seqno_;
   while ( space > 0 && !fin_sent_ ) {
     TCPSenderMessage message;
     // add SYN
-    if ( !sendno_ ) {
+    if ( !next_seqno_ ) {
       message.SYN = true;
       syn_sent_ = true;
       space--;
     }
     // add payload
-    message.seqno = Wrap32::wrap( sendno_, isn_ );
+    message.seqno = Wrap32::wrap( next_seqno_, isn_ );
     read( outbound_stream, min( space, TCPConfig::MAX_PAYLOAD_SIZE ), message.payload );
     space -= message.payload.size();
     // add FIN
@@ -122,7 +127,7 @@ void TCPSender::push( Reader& outbound_stream )
       timer_.start();
     }
 
-    sendno_ += len;
+    next_seqno_ += len;
     sequence_numbers_in_flight_ += len;
   }
 }
@@ -131,7 +136,7 @@ TCPSenderMessage TCPSender::send_empty_message() const
 {
   // Your code here.
   TCPSenderMessage message;
-  message.seqno = Wrap32::wrap( sendno_, isn_ );
+  message.seqno = Wrap32::wrap( next_seqno_, isn_ );
   return message;
 }
 
@@ -139,14 +144,18 @@ void TCPSender::receive( const TCPReceiverMessage& msg )
 {
   // Your code here.
   if ( msg.ackno.has_value() ) {
-    ackno_ = msg.ackno.value().unwrap( isn_, sendno_ );
+    uint64_t msg_ackno = msg.ackno.value().unwrap( isn_, next_seqno_ );
+    if ( msg_ackno > next_seqno_ ) {
+      return;
+    }
+    ackno_ = msg_ackno;
   }
   window_size_ = msg.window_size;
 
   bool refresh = false;
   while ( outstanding_messages_.size() ) {
     TCPSenderMessage& message = outstanding_messages_.front();
-    uint64_t seqno = message.seqno.unwrap( isn_, sendno_ );
+    uint64_t seqno = message.seqno.unwrap( isn_, next_seqno_ );
     if ( seqno + message.sequence_length() > ackno_ ) {
       break;
     }
@@ -157,7 +166,7 @@ void TCPSender::receive( const TCPReceiverMessage& msg )
 
   if ( refresh ) {
     if ( outstanding_messages_.size() ) {
-      timer_.restart( false );
+      timer_.reset_start();
     } else {
       timer_.close();
     }
@@ -169,6 +178,6 @@ void TCPSender::tick( const size_t ms_since_last_tick )
   // Your code here.
   if ( timer_.tick( ms_since_last_tick ) ) {
     messages_.push( outstanding_messages_.front() );
-    timer_.restart( window_size_ != 0 );
+    timer_.double_start( window_size_ != 0 );
   }
 }

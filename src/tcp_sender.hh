@@ -22,7 +22,8 @@ public:
   explicit TCPTimer( uint64_t initial_RTO_ms );
   bool running();
   void start();
-  void restart( bool double_RTO );
+  void reset_start();
+  void double_start( bool double_RTO );
   void close();
   bool tick( uint64_t ms_since_last_tick );
   uint64_t consecutive_retransmissions() const;
@@ -38,7 +39,7 @@ class TCPSender
   // std::optional<Wrap32> ackno {};
   uint64_t ackno_ = 0;
   // 已经成功发送的序号
-  uint64_t sendno_ = 0;
+  uint64_t next_seqno_ = 0;
   // 窗口大小
   uint16_t window_size_ = 1;
   // 等待发送的信息
