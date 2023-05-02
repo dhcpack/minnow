@@ -36,7 +36,6 @@ class TCPSender
 
   TCPTimer timer_;
   // 已经成功接收的序号
-  // std::optional<Wrap32> ackno {};
   uint64_t ackno_ = 0;
   // 已经成功发送的序号
   uint64_t next_seqno_ = 0;
@@ -46,8 +45,6 @@ class TCPSender
   std::queue<TCPSenderMessage> messages_ {};
   // 发送但未确认的信息
   std::queue<TCPSenderMessage> outstanding_messages_ {};
-  // // 连续重传数量
-  // uint64_t consecutive_retransmissions_ = 0;
   // 发送但未接收的序号数量
   uint64_t sequence_numbers_in_flight_ = 0;
 

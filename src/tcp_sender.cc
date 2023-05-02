@@ -98,9 +98,11 @@ optional<TCPSenderMessage> TCPSender::maybe_send()
 void TCPSender::push( Reader& outbound_stream )
 {
   // Your code here.
+  // Space of the window
   uint64_t space = ackno_ + ( window_size_ == 0 ? 1 : window_size_ ) - next_seqno_;
   while ( space > 0 && !fin_sent_ ) {
     TCPSenderMessage message;
+    // 构造TCPSenderMessage
     // add SYN
     if ( !next_seqno_ ) {
       message.SYN = true;
@@ -117,14 +119,16 @@ void TCPSender::push( Reader& outbound_stream )
       fin_sent_ = true;
       space--;
     }
+
     size_t len = message.sequence_length();
     if ( len == 0 ) {
       return;
     }
+    // 加入到发送队列中
     messages_.push( message );
     outstanding_messages_.push( message );
     if ( !timer_.running() ) {
-      timer_.start();
+      timer_.start(); // 启动timer
     }
 
     next_seqno_ += len;
@@ -146,7 +150,7 @@ void TCPSender::receive( const TCPReceiverMessage& msg )
   if ( msg.ackno.has_value() ) {
     uint64_t msg_ackno = msg.ackno.value().unwrap( isn_, next_seqno_ );
     if ( msg_ackno > next_seqno_ ) {
-      return;
+      return; // Ignore impossible ackno
     }
     ackno_ = msg_ackno;
   }
@@ -159,16 +163,18 @@ void TCPSender::receive( const TCPReceiverMessage& msg )
     if ( seqno + message.sequence_length() > ackno_ ) {
       break;
     }
+    // 已经成功接收
     sequence_numbers_in_flight_ -= message.sequence_length();
     outstanding_messages_.pop();
     refresh = true;
   }
 
+  // detect new ackno, then reset timer
   if ( refresh ) {
     if ( outstanding_messages_.size() ) {
-      timer_.reset_start();
+      timer_.reset_start(); // 恢复RTO
     } else {
-      timer_.close();
+      timer_.close(); // 关闭timer
     }
   }
 }
@@ -177,6 +183,7 @@ void TCPSender::tick( const size_t ms_since_last_tick )
 {
   // Your code here.
   if ( timer_.tick( ms_since_last_tick ) ) {
+    // 超时重传，并将RTO加倍
     messages_.push( outstanding_messages_.front() );
     timer_.double_start( window_size_ != 0 );
   }
