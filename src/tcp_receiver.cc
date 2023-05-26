@@ -6,7 +6,7 @@ void TCPReceiver::receive( TCPSenderMessage message, Reassembler& reassembler, W
 {
   // Your code here.
   Wrap32 seqno( message.seqno );
-  if ( message.SYN ) {
+  if ( message.SYN ) {  // Omit SYN
     seqno = seqno + 1;
     zero_point_ = seqno;
   }
@@ -23,7 +23,7 @@ void TCPReceiver::receive( TCPSenderMessage message, Reassembler& reassembler, W
     finned_ = true;
   }
   if ( finned_ && inbound_stream.is_closed() ) {
-    next_index_ = next_index_.value() + 1;
+    next_index_ = next_index_.value() + 1;  // Omit FIN
   }
 }
 
